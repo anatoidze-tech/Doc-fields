@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signify — Document Preparation</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root {
+  --text-primary: #03022e;
+  --text-secondary: #686782;
+  --text-placeholder: #9a9aab;
+  --bg-white: #ffffff;
+  --bg-lighter: #f2f2f5;
+  --stroke-lightest: #e6e6ea;
+  --stroke-light: #cdccd5;
+  --purple: #7222ff;
+  --purple-bg: #ede8ff;
+  --purple-stroke: #b18aff;
+  --green: #17c717;
+  --orange: #fa8c16;
+  --orange-bg: #fee8d0;
+  --orange-stroke: #fdd1a2;
+  --teal: #5ca590;
+  --teal-bg: #e4f3ef;
+  --teal-stroke: #bedbd3;
+  --blue: #7222ff;
+  --blue-bg: #ede8ff;
+  --blue-stroke: #b18aff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--bg-lighter);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+/* ---- HEADER ---- */
+#app-header {
+  height: 58px;
+  background: white;
+  border-bottom: 1px solid var(--stroke-lightest);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+.hdr-left { display: flex; align-items: center; gap: 8px; }
+.hdr-right { display: flex; align-items: center; gap: 12px; }
+.doc-title {
+  font-size: 16px; font-weight: 700; line-height: 23px; white-space: nowrap;
+  cursor: text; border-radius: 4px; padding: 1px 4px; margin: -1px -4px;
+  transition: background 0.12s;
+}
+.doc-title:hover { background: var(--bg-lighter); }
+.doc-title-input {
+  font-size: 16px; font-weight: 700; line-height: 23px;
+  border: 1.5px solid var(--purple); border-radius: 4px;
+  padding: 0 4px; outline: none; background: white;
+  color: var(--text-primary); font-family: inherit;
+  box-shadow: 0 0 0 3px rgba(114,34,255,0.12);
+  min-width: 120px; max-width: 400px;
+}
+.doc-meta { display: flex; align-items: center; }
+
+.icon-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; cursor: pointer;
+  background: transparent; border: none;
+  color: var(--text-secondary);
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--bg-lighter); }
+.icon-btn.bordered {
+  width: 40px; height: 40px;
+  border: 1px solid var(--stroke-light);
+}
+.ghost-btn {
+  height: 32px; padding: 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  border-radius: 8px; cursor: pointer;
+  background: transparent; border: none;
+  color: var(--text-secondary); font-size: 14px; font-weight: 500;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+.ghost-btn:hover { background: var(--bg-lighter); }
+.send-btn {
+  height: 40px; padding: 0 20px; min-width: 96px;
+  background: var(--green); color: white;
+  border: none; border-radius: 8px;
+  font-size: 16px; font-weight: 500; cursor: pointer;
+  transition: background 0.12s; white-space: nowrap;
+}
+.send-btn:hover { background: #14b314; }
+#preview-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
+
+/* ---- MAIN ---- */
+#main-content { flex: 1; display: flex; overflow: hidden; }
+
+/* ---- DOC VIEWER ---- */
+#doc-viewer {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; background: var(--bg-lighter);
+  min-width: 0;
+}
+.preview-banner {
+  background: #f5f0ff;
+  border-bottom: 1px solid #d8c8ff;
+  padding: 0 16px;
+  height: 40px;
+  display: none;
+  align-items: center; gap: 12px;
+  font-size: 13px; color: var(--purple);
+  flex-shrink: 0;
+}
+.preview-as-btn {
+  height: 24px; padding: 0 10px;
+  border-radius: 100px; cursor: pointer;
+  border: 1px solid rgba(114,34,255,0.3);
+  background: transparent; font-size: 12px; color: var(--purple);
+  transition: all 0.12s;
+}
+.preview-as-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
+.preview-exit-btn {
+  margin-left: auto; background: none; border: none;
+  color: var(--purple); cursor: pointer; font-size: 13px;
+  text-decoration: underline;
+}
+
+#doc-toolbar {
+  height: 50px;
+  background: white;
+  border-bottom: 1px solid var(--stroke-lightest);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 16px;
+  flex-shrink: 0;
+}
+.tb-section { display: flex; align-items: center; gap: 4px; }
+.page-input {
+  width: 32px; height: 32px;
+  border: 1px solid var(--stroke-light);
+  border-radius: 8px; text-align: center;
+  font-size: 14px; color: var(--text-primary);
+  background: white;
+}
+.page-input:focus { outline: none; border-color: var(--purple); }
+.zoom-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; cursor: pointer; border: none;
+  background: transparent; color: var(--text-secondary);
+  transition: background 0.12s;
+}
+.zoom-btn:hover { background: var(--bg-lighter); }
+.zoom-val {
+  height: 32px; padding: 0 12px;
+  display: flex; align-items: center;
+  border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  transition: background 0.12s;
+}
+.zoom-val:hover { background: var(--bg-lighter); }
+
+#pages-wrap {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 16px 0 48px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.page-wrapper {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.page-lbl {
+  width: 560px; display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--text-secondary); line-height: 16px;
+}
+.doc-page {
+  width: 560px;
+  background: white;
+  border: 1px solid var(--stroke-lightest);
+  border-radius: 12px;
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
+  cursor: default;
+}
+.doc-content {
+  padding: 44px 52px 52px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-size: 10px; line-height: 1.65; color: #1a1a2e;
+}
+.doc-h1 { font-size: 17px; font-weight: 700; color: #5c50e6; margin-bottom: 10px; font-family: sans-serif; }
+.doc-h2 { font-size: 10px; font-weight: 700; margin: 10px 0 4px; font-family: sans-serif; }
+.doc-p { margin-bottom: 6px; }
+.doc-hr { border: none; border-bottom: 1px solid #e0e0e8; margin: 8px 0; }
+.doc-parties { display: flex; gap: 20px; margin: 6px 0; }
+.doc-party { flex: 1; }
+.doc-party-head { font-weight: 700; font-size: 10px; font-family: sans-serif; }
+.doc-sig-area { display: flex; gap: 32px; margin-top: 16px; }
+.doc-sig-block { flex: 1; }
+.doc-sig-line { border-bottom: 1px solid #aaa; height: 32px; margin-bottom: 4px; }
+.doc-sig-label { font-size: 9px; color: #666; font-family: sans-serif; }
+
+/* ---- PLACED FIELDS ---- */
+.placed-field {
+  position: absolute;
+  cursor: grab;
+  border-radius: 4px;
+  transition: box-shadow 0.12s;
+  user-select: none;
+}
+.placed-field.dragging { cursor: grabbing; opacity: 0.85; transition: none; }
+.link-badge {
+  position: absolute; top: -7px; right: -7px;
+  width: 16px; height: 16px;
+  background: var(--purple); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; z-index: 10;
+}
+.f-edit-input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: inherit; font-family: inherit; color: var(--text-primary);
+  padding: 0 2px; min-width: 0; cursor: text;
+}
+.f-edit-input::placeholder { color: var(--text-placeholder); }
+/* Signed / filled signature state */
+.f-signed {
+  background: #fff !important;
+  border: 2px solid var(--green) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  cursor: pointer !important;
+}
+.sig-filled-wrap {
+  position: relative; width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px 16px 4px; gap: 0;
+}
+.sig-handwriting {
+  font-family: 'Dancing Script', cursive;
+  font-size: 34px; font-weight: 700;
+  color: var(--text-primary); line-height: 1;
+  text-align: center; pointer-events: none;
+  user-select: none;
+}
+.sig-badge-top {
+  position: absolute; top: -11px; left: 6px;
+  background: #fff; padding: 2px 4px;
+  font-size: 10px; color: var(--text-secondary);
+  line-height: 15px; pointer-events: none;
+  max-width: 156px; white-space: nowrap;
+}
+.sig-badge-top small {
+  display: block; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text-secondary);
+}
+.sig-badge-bot {
+  position: absolute; bottom: -11px; right: 6px;
+  background: #fff; padding: 2px 4px;
+  font-size: 10px; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 3px;
+  line-height: 15px; pointer-events: none; white-space: nowrap;
+}
+/* click-to-unsign hint on hover */
+.f-signed:hover::after {
+  content: 'Click to remove';
+  position: absolute; bottom: calc(100% + 14px); left: 50%; transform: translateX(-50%);
+  background: rgba(3,2,46,0.8); color: #fff;
+  font-size: 11px; padding: 3px 8px; border-radius: 4px; white-space: nowrap;
+  pointer-events: none; z-index: 20;
+}
+.placed-field:hover { box-shadow: 0 0 0 1px rgba(114,34,255,0.5); }
+.placed-field.sel { box-shadow: 0 0 0 2px var(--purple) !important; }
+
+.f-orange { background: var(--orange-bg); border: 1px solid var(--orange); }
+.f-teal   { background: var(--teal-bg);   border: 1px solid var(--teal); }
+.f-purple { background: var(--purple-bg); border: 1px solid var(--purple); }
+.f-blue   { background: var(--blue-bg);   border: 1px solid var(--blue); }
+.f-disabled { background: var(--bg-lighter); border: 1px solid var(--stroke-light); pointer-events: none; opacity: 0.55; }
+
+.f-body {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 8px; font-size: 10px; overflow: hidden;
+  white-space: nowrap;
+}
+.f-sig-body {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 5px; padding: 8px; font-size: 10px;
+}
+.f-star { font-size: 11px; font-weight: 700; flex-shrink: 0; line-height: 1; opacity: 0.8; }
+
+/* Selection corner handles */
+.sel-handle {
+  position: absolute; width: 8px; height: 8px;
+  background: white; border: 1.5px solid var(--purple);
+  border-radius: 50%; z-index: 20;
+  display: none;
+}
+.placed-field.sel .sel-handle { display: block; }
+.sh-tl { top: -4px; left: -4px; cursor: nw-resize; }
+.sh-tr { top: -4px; right: -4px; cursor: ne-resize; }
+.sh-bl { bottom: -4px; left: -4px; cursor: sw-resize; }
+.sh-br { bottom: -4px; right: -4px; cursor: se-resize; }
+
+/* Field action toolbar */
+.f-toolbar {
+  position: absolute;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: none;
+  align-items: center;
+  padding: 0 6px;
+  height: 30px;
+  gap: 2px;
+  z-index: 30;
+}
+.ft-btn {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 5px; cursor: pointer; border: none;
+  background: transparent; color: var(--text-secondary);
+  transition: background 0.1s;
+}
+.ft-btn:hover { background: var(--bg-lighter); color: var(--text-primary); }
+.ft-sep { width: 1px; height: 20px; background: var(--stroke-lightest); margin: 0 2px; }
+
+/* Drop zone */
+.doc-page.drag-over { box-shadow: 0 0 0 3px var(--purple); }
+.field-chip.dragging { opacity: 0.35; }
+
+/* ---- RIGHT PANEL ---- */
+#right-panel {
+  width: 448px; flex-shrink: 0;
+  background: white;
+  border-left: 1px solid var(--stroke-lightest);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+.panel-tabs {
+  height: 50px; display: flex;
+  border-bottom: 1px solid var(--stroke-lightest);
+  flex-shrink: 0;
+}
+.tab-item {
+  flex: 1; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
+}
+.tab-item.active { color: var(--text-primary); border-bottom-color: var(--purple); }
+
+.panel-hdr {
+  height: 50px; display: flex; align-items: center; gap: 6px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--stroke-lightest);
+  flex-shrink: 0;
+}
+.panel-hdr-title { font-size: 14px; font-weight: 500; flex: 1; }
+
+.panel-body {
+  flex: 1; overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.sec-label { font-size: 14px; font-weight: 500; }
+.sub-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+
+.r-item {
+  height: 42px; width: 100%;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--stroke-light);
+  cursor: pointer; background: white;
+  transition: all 0.12s; margin-bottom: 8px;
+}
+.r-item:last-child { margin-bottom: 0; }
+.r-item.r-ann { background: var(--orange-bg); border-color: var(--orange); }
+.r-item.r-john-active { background: var(--teal-bg); border-color: var(--teal); }
+.r-item.r-sender-active { background: var(--blue-bg); border-color: var(--blue); }
+
+.r-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.r-dot.sender { border: 1.5px solid var(--text-secondary); }
+.r-dot.orange { background: var(--orange); }
+.r-dot.teal { border: 1.5px solid var(--teal); }
+.r-dot.teal-filled { background: var(--teal); }
+
+.r-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.r-name { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.field-chip {
+  height: 42px;
+  width: calc(50% - 4px);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--orange-stroke);
+  background: white; cursor: grab;
+  font-size: 14px; transition: all 0.12s;
+  user-select: none;
+}
+.field-chip:hover { background: var(--orange-bg); }
+.field-chip:active { cursor: grabbing; }
+.field-chip.teal-scheme { border-color: var(--teal-stroke); }
+.field-chip.teal-scheme:hover { background: var(--teal-bg); }
+.field-chip.blue-scheme { border-color: var(--blue-stroke); }
+.field-chip.blue-scheme:hover { background: var(--blue-bg); }
+.chip-icon { width: 16px; height: 16px; flex-shrink: 0; color: var(--orange); }
+.chip-icon.teal { color: var(--teal); }
+.chip-icon.blue { color: var(--blue); }
+.fields-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Settings form */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-lbl { font-size: 12px; font-weight: 500; color: var(--text-secondary); line-height: 16px; }
+.form-hint { font-size: 12px; color: var(--text-secondary); line-height: 16px; margin-top: 4px; }
+
+.form-input, .form-select {
+  height: 32px; width: 100%; padding: 0 12px;
+  border: 1px solid var(--stroke-light);
+  border-radius: 8px; font-size: 14px;
+  color: var(--text-primary); background: white;
+  -webkit-appearance: none; appearance: none;
+  font-family: inherit;
+}
+.form-input:focus, .form-select:focus {
+  outline: none; border-color: var(--purple);
+  box-shadow: 0 0 0 2px rgba(114,34,255,0.1);
+}
+.sel-wrap { position: relative; }
+.sel-wrap::after {
+  content: '';
+  position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-secondary);
+  pointer-events: none;
+}
+.sel-icon-wrap { position: relative; }
+.sel-icon-wrap .si { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--orange); pointer-events: none; z-index: 1; }
+.sel-icon-wrap .form-select { padding-left: 34px; }
+
+.dup-btn {
+  height: 32px; width: 100%;
+  background: var(--bg-lighter); border: none; border-radius: 8px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  transition: background 0.12s; font-family: inherit;
+}
+.dup-btn:hover { background: #e5e5ea; }
+
+.cb-row { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.cb-box {
+  width: 16px; height: 16px; flex-shrink: 0;
+  border-radius: 4px; border: 1px solid var(--stroke-light);
+  background: white; display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.cb-box.on { background: var(--purple); border-color: var(--purple); }
+
+/* Accordion */
+.acc-hdr {
+  display: flex; align-items: center; gap: 24px;
+  cursor: pointer; padding: 2px 0;
+}
+.acc-title { flex: 1; font-size: 14px; font-weight: 500; }
+.acc-icon-btn {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; color: var(--text-secondary);
+  transition: background 0.12s;
+}
+.acc-hdr:hover .acc-icon-btn { background: var(--bg-lighter); }
+.acc-chev { transition: transform 0.2s; }
+.acc-chev.open { transform: rotate(180deg); }
+.acc-body {
+  overflow: hidden; max-height: 0;
+  transition: max-height 0.25s ease;
+}
+.acc-body.open { max-height: 800px; }
+.acc-inner {
+  padding-top: 16px;
+  display: flex; flex-direction: column; gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--stroke-lightest);
+}
+
+.f-row { display: flex; gap: 12px; }
+.f-row > * { flex: 1; }
+.f-prefix-wrap { position: relative; }
+.f-prefix {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; font-weight: 500; color: var(--text-secondary); pointer-events: none;
+}
+.f-prefix-wrap .form-input { padding-left: 28px; }
+
+.s-section { padding-bottom: 24px; border-bottom: 1px solid var(--stroke-lightest); display: flex; flex-direction: column; gap: 16px; }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1a1a2e; color: white; padding: 10px 20px;
+  border-radius: 8px; font-size: 14px;
+  pointer-events: none; opacity: 0; transition: opacity 0.25s;
+  z-index: 9999; white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #cdccd5; border-radius: 2px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- PAGES SIDEBAR ---- */
+#pages-sidebar {
+  width: 184px;
+  flex-shrink: 0;
+  background: white;
+  border-right: 1px solid var(--stroke-lightest);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 16px;
+  transition: width 0.22s cubic-bezier(.4,0,.2,1),
+              padding 0.22s cubic-bezier(.4,0,.2,1),
+              opacity 0.18s ease;
+}
+#pages-sidebar.closed {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.psb-doc-hdr {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.psb-doc-title {
+  flex: 1;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.psb-doc-sub {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  white-space: nowrap;
+}
+.psb-chev-btn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: none; background: transparent;
+  color: var(--text-secondary); cursor: pointer;
+  transition: background 0.12s;
+}
+.psb-chev-btn:hover { background: var(--bg-lighter); }
+.psb-chev { transition: transform 0.2s; }
+.psb-chev.collapsed { transform: rotate(180deg); }
+.psb-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  max-height: 2000px;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+.psb-pages.collapsed { max-height: 0; opacity: 0; }
+.psb-page {
+  position: relative;
+  padding-bottom: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.psb-card {
+  width: 152px;
+  height: 204px;
+  background: white;
+  border-radius: 8px;
+  border: 1.5px solid var(--stroke-lightest);
+  padding: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.psb-page.active .psb-card {
+  border: 2px solid var(--purple);
+}
+.psb-page:not(.active):hover .psb-card {
+  border-color: var(--stroke-light);
+}
+.psb-num {
+  position: absolute;
+  bottom: 0;
+  right: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--purple);
+}
+
+/* panel-left active state */
+#psb-toggle-btn.active { background: var(--purple-bg); color: var(--purple); }
+
+/* Full document view */
+body.fullview #app-header,
+body.fullview #right-panel,
+body.fullview #doc-toolbar,
+body.fullview #preview-banner,
+body.fullview #pages-sidebar { display: none !important; }
+body.fullview #doc-viewer { background: #1a1a2e; }
+body.fullview #pages-wrap { padding: 32px 0 64px; }
+#fullview-exit {
+  display: none;
+  position: fixed; top: 16px; right: 16px; z-index: 9999;
+  background: rgba(3,2,46,0.75); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white; border-radius: 8px;
+  padding: 0 14px; height: 36px; gap: 8px;
+  align-items: center; cursor: pointer; font-size: 13px;
+  font-family: inherit; transition: background 0.12s;
+}
+#fullview-exit:hover { background: rgba(3,2,46,0.92); }
+body.fullview #fullview-exit { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header id="app-header">
+  <div class="hdr-left">
+    <button class="icon-btn" onclick="goBack()">
+      <i data-lucide="arrow-left" width="20" height="20"></i>
+    </button>
+    <div>
+      <div class="doc-title" id="doc-title" onclick="startTitleEdit()">Basic non disclosure agreement</div>
+      <div class="doc-meta">
+        <button class="ghost-btn">
+          <i data-lucide="folder" width="16" height="16"></i>
+          Primary
+        </button>
+        <button class="ghost-btn">
+          <i data-lucide="tag" width="16" height="16"></i>
+          Tag
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <button class="icon-btn">
+      <i data-lucide="circle-help" width="20" height="20"></i>
+    </button>
+    <button class="icon-btn">
+      <i data-lucide="ellipsis-vertical" width="20" height="20"></i>
+    </button>
+    <button id="preview-btn" class="icon-btn bordered" onclick="togglePreview()">
+      <i data-lucide="eye" width="20" height="20"></i>
+    </button>
+    <button class="send-btn" id="send-btn" onclick="handleSend()">Send</button>
+    <button class="icon-btn" onclick="handleClose()">
+      <i data-lucide="x" width="20" height="20"></i>
+    </button>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<div id="main-content">
+
+  <!-- ===== PAGES SIDEBAR ===== -->
+  <div id="pages-sidebar" class="closed">
+    <div class="psb-doc">
+      <div class="psb-doc-hdr">
+        <span class="psb-doc-title" id="psb-doc-title">Basic non disclosure agreement</span>
+        <button class="psb-chev-btn" onclick="togglePsbCollapse()" title="Collapse">
+          <i data-lucide="chevron-up" id="psb-chev" class="psb-chev" width="20" height="20"></i>
+        </button>
+      </div>
+      <div class="psb-doc-sub" id="psb-doc-sub">2 pages</div>
+      <div class="psb-pages" id="psb-pages">
+        <div class="psb-page active" data-page="1" onclick="scrollToPage(1)">
+          <div class="psb-card">
+            <svg width="128" height="180" viewBox="0 0 128 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="8" width="56" height="5" rx="2" fill="#5c50e6" opacity="0.55"/>
+              <rect x="6" y="18" width="28" height="2.5" rx="1.25" fill="#d0d0dc"/>
+              <rect x="6" y="23" width="116" height="0.75" fill="#e0e0e8"/>
+              <rect x="6" y="28" width="22" height="2.5" rx="1.25" fill="#bbb"/>
+              <rect x="70" y="28" width="22" height="2.5" rx="1.25" fill="#bbb"/>
+              <rect x="6" y="38" width="96" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="42" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="46" width="88" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="53" width="44" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="59" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="63" width="104" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="67" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="71" width="78" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="78" width="44" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="84" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="88" width="96" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="92" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="96" width="106" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="100" width="84" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="107" width="44" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="113" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="117" width="100" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="121" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="148" width="48" height="0.75" fill="#aaa"/>
+              <rect x="74" y="148" width="48" height="0.75" fill="#aaa"/>
+              <rect x="6" y="152" width="28" height="2" rx="1" fill="#e0e0e8"/>
+              <rect x="74" y="152" width="34" height="2" rx="1" fill="#e0e0e8"/>
+            </svg>
+          </div>
+          <span class="psb-num">1</span>
+        </div>
+        <div class="psb-page" data-page="2" onclick="scrollToPage(2)">
+          <div class="psb-card">
+            <svg width="128" height="180" viewBox="0 0 128 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="8" width="38" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="14" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="18" width="104" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="22" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="29" width="38" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="35" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="39" width="96" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="43" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="47" width="72" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="54" width="44" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="60" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="64" width="88" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="68" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="75" width="36" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="81" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="85" width="100" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="89" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="93" width="80" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="100" width="42" height="2.5" rx="1.25" fill="#c8c8d8"/>
+              <rect x="6" y="106" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="110" width="96" height="2" rx="1" fill="#e8e8ef"/>
+              <rect x="6" y="114" width="116" height="2" rx="1" fill="#e8e8ef"/>
+              <!-- table-like block -->
+              <rect x="6" y="125" width="116" height="20" rx="2" fill="#f5f5f8"/>
+              <rect x="6" y="125" width="116" height="0.75" fill="#ddd"/>
+              <rect x="6" y="135" width="116" height="0.75" fill="#ddd"/>
+              <rect x="6" y="145" width="116" height="0.75" fill="#ddd"/>
+              <rect x="36" y="125" width="0.75" height="20" fill="#ddd"/>
+              <rect x="71" y="125" width="0.75" height="20" fill="#ddd"/>
+              <rect x="6" y="148" width="48" height="0.75" fill="#aaa"/>
+              <rect x="74" y="148" width="48" height="0.75" fill="#aaa"/>
+              <rect x="6" y="152" width="34" height="2" rx="1" fill="#e0e0e8"/>
+              <rect x="74" y="152" width="28" height="2" rx="1" fill="#e0e0e8"/>
+            </svg>
+          </div>
+          <span class="psb-num">2</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DOCUMENT VIEWER ===== -->
+  <div id="doc-viewer">
+
+    <div id="preview-banner" class="preview-banner">
+      <i data-lucide="eye" width="16" height="16"></i>
+      <span style="font-weight:500">Preview — view as:</span>
+      <button class="preview-as-btn" id="pv-sender" onclick="setPreviewAs('sender')">Sender (You)</button>
+      <button class="preview-as-btn active" id="pv-ann" onclick="setPreviewAs('ann')">Ann Smith</button>
+      <button class="preview-as-btn" id="pv-john" onclick="setPreviewAs('john')">John Williams</button>
+      <button class="preview-exit-btn" onclick="togglePreview()">Exit preview</button>
+    </div>
+
+    <div id="doc-toolbar">
+      <div class="tb-section">
+        <button class="zoom-btn" id="psb-toggle-btn" onclick="togglePagesSidebar()" title="Toggle pages panel">
+          <i data-lucide="panel-left" width="20" height="20"></i>
+        </button>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:12px">
+          <span style="font-size:14px">Page</span>
+          <input type="text" class="page-input" value="1">
+          <span style="font-size:14px">/ 2</span>
+        </div>
+      </div>
+      <div class="tb-section">
+        <button class="zoom-btn" onclick="chgZoom(-10)">
+          <i data-lucide="zoom-out" width="20" height="20"></i>
+        </button>
+        <div class="zoom-val" id="zoom-lbl" onclick="resetZoom()">100%</div>
+        <button class="zoom-btn" onclick="chgZoom(10)">
+          <i data-lucide="zoom-in" width="20" height="20"></i>
+        </button>
+      </div>
+      <div class="tb-section" style="min-width:142px;justify-content:flex-end">
+        <button class="zoom-btn" id="fullview-btn" onclick="toggleFullView()" title="Full document view">
+          <i data-lucide="maximize" width="20" height="20"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="pages-wrap">
+
+      <!-- PAGE 1 -->
+      <div class="page-wrapper">
+        <div class="doc-page" id="page-1"
+          ondragover="onDragOver(event,'1')"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event,'1')"
+          onclick="onPageClick(event)">
+
+          <div class="doc-content">
+            <div class="doc-h1">Freelance Agreement</div>
+            <div class="doc-p" style="font-weight:700">Date:</div>
+            <div class="doc-hr"></div>
+            <div class="doc-parties">
+              <div class="doc-party"><div class="doc-party-head">Contractor</div></div>
+              <div class="doc-party">
+                <div class="doc-party-head">Client</div>
+                <div>IT Corp LLC</div>
+                <div>R/N — 405432580</div>
+                <div>Director: Brendan Fraser</div>
+              </div>
+            </div>
+            <div class="doc-hr"></div>
+            <div class="doc-h2">Subject of the Agreement</div>
+            <p class="doc-p">In accordance with the present Agreement and legislation of Georgia, the Contractor is appointed to the position of Chief Marketing Officer of Merkeleon Georgia LLC and accordingly, the Contractor should perform the labour work in accordance with this Agreement.</p>
+            <div class="doc-h2">Contract duration</div>
+            <p class="doc-p">This Contract is valid for 1 (one) year. The labor relation is deemed terminated by expiration of the duration of the contract. The termination of the contract by expiration does not require any additional notification. The Employee shall be subject to probation period commencing from the starting date for 3 (three) months period.</p>
+            <div class="doc-h2">Obligations of the Parties</div>
+            <p class="doc-p">Contractor shall perform his/her duties personally and in a conscientious, diligent and qualified manner; take care of the Employer's property, entrusted equipment and inventory and keep it safe and undamaged during the whole term of employment.</p>
+            <div class="doc-sig-area">
+              <div class="doc-sig-block">
+                <div class="doc-sig-label">Contractor</div>
+                <div class="doc-sig-line"></div>
+              </div>
+              <div class="doc-sig-block">
+                <div class="doc-sig-label">Employer — IT Corp LLC</div>
+                <div class="doc-sig-line"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="page-lbl"><span>Basic non disclosure agreement</span><span>1 / 2</span></div>
+      </div>
+
+      <!-- PAGE 2 -->
+      <div class="page-wrapper">
+        <div class="doc-page" id="page-2"
+          ondragover="onDragOver(event,'2')"
+          ondragleave="onDragLeave(event)"
+          ondrop="onDrop(event,'2')"
+          onclick="onPageClick(event)">
+
+          <div class="doc-content">
+            <div class="doc-h2">Compensation</div>
+            <p class="doc-p">The employer shall pay the Contractor a monthly salary as agreed upon in writing. Payments shall be made on the last business day of each month via bank transfer to the account designated by the Contractor.</p>
+            <div class="doc-h2">Confidentiality</div>
+            <p class="doc-p">The Contractor agrees to keep all proprietary information, trade secrets, and business strategies of the Company strictly confidential during and after the term of this Agreement. This obligation shall survive termination of the Agreement.</p>
+            <div class="doc-h2">Non-Disclosure</div>
+            <p class="doc-p">Neither party shall disclose the terms of this Agreement to any third party without prior written consent from the other party. Any breach of this provision shall constitute material breach of the Agreement.</p>
+            <div class="doc-h2">Governing Law</div>
+            <p class="doc-p">This Agreement shall be governed by and construed in accordance with the laws of Georgia. Any disputes arising from this Agreement shall be resolved through arbitration in Tbilisi.</p>
+            <div class="doc-h2">Entire Agreement</div>
+            <p class="doc-p">This Agreement constitutes the entire agreement between the parties and supersedes all prior discussions, representations, or agreements relating to the subject matter herein.</p>
+            <div class="doc-sig-area">
+              <div class="doc-sig-block">
+                <div class="doc-sig-label">Contractor Signature</div>
+                <div class="doc-sig-line"></div>
+              </div>
+              <div class="doc-sig-block">
+                <div class="doc-sig-label">Employer Signature</div>
+                <div class="doc-sig-line"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="page-lbl"><span>Basic non disclosure agreement</span><span>2 / 2</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== RIGHT PANEL ===== -->
+  <div id="right-panel">
+
+    <!-- RECIPIENTS VIEW -->
+    <div id="pv-recipients" style="display:flex;flex-direction:column;height:100%">
+      <div class="panel-tabs">
+        <div class="tab-item active" id="tab-r" onclick="switchTab('recipients')">Recipients</div>
+        <div class="tab-item" id="tab-a" onclick="switchTab('attributes')">Attributes</div>
+      </div>
+      <div class="panel-body">
+
+        <div class="s-section">
+          <div class="sec-label">Recipients</div>
+          <div>
+            <div class="r-item" id="ri-sender" onclick="selRecipient('sender')">
+              <div class="r-dot" id="sender-dot" style="background:var(--blue);border-radius:50%;width:8px;height:8px;flex-shrink:0"></div>
+              <i data-lucide="send" class="r-icon" width="16" height="16" style="color:var(--blue)"></i>
+              <span class="r-name">Sender (You)</span>
+            </div>
+            <div class="r-item r-ann" id="ri-ann" onclick="selRecipient('ann')">
+              <div class="r-dot orange"></div>
+              <i data-lucide="pencil" class="r-icon" width="16" height="16" style="color:var(--orange)"></i>
+              <span class="r-name">Ann Smith</span>
+            </div>
+            <div class="r-item" id="ri-john" onclick="selRecipient('john')">
+              <div class="r-dot teal" id="john-dot"></div>
+              <i data-lucide="pencil" class="r-icon" width="16" height="16" style="color:var(--teal)"></i>
+              <span class="r-name">John Williams</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fields -->
+        <div>
+          <div class="sec-label" id="fields-title" style="margin-bottom:16px">Fields (Ann Smith)</div>
+
+          <div style="margin-bottom:16px">
+            <div class="sub-label">Signature</div>
+            <div class="fields-grid">
+              <div class="field-chip" draggable="true" data-type="signature" data-label="Signature" ondragstart="onChipDrag(event)">
+                <i data-lucide="signature" class="chip-icon" width="16" height="16"></i>Signature
+              </div>
+              <div class="field-chip" draggable="true" data-type="initials" data-label="Initials" ondragstart="onChipDrag(event)">
+                <i data-lucide="case-sensitive" class="chip-icon" width="16" height="16"></i>Initials
+              </div>
+              <div class="field-chip" draggable="true" data-type="datesigned" data-label="Date signed" ondragstart="onChipDrag(event)">
+                <i data-lucide="calendar-check" class="chip-icon" width="16" height="16"></i>Date signed
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px">
+            <div class="sub-label">Contact Information</div>
+            <div class="fields-grid">
+              <div class="field-chip" draggable="true" data-type="fullname" data-label="Full name" ondragstart="onChipDrag(event)">
+                <i data-lucide="user" class="chip-icon" width="16" height="16"></i>Full name
+              </div>
+              <div class="field-chip" draggable="true" data-type="email" data-label="Email" ondragstart="onChipDrag(event)">
+                <i data-lucide="at-sign" class="chip-icon" width="16" height="16"></i>Email
+              </div>
+              <div class="field-chip" draggable="true" data-type="mobile" data-label="Mobile number" ondragstart="onChipDrag(event)">
+                <i data-lucide="smartphone" class="chip-icon" width="16" height="16"></i>Mobile number
+              </div>
+              <div class="field-chip" draggable="true" data-type="nationalid" data-label="National ID" ondragstart="onChipDrag(event)">
+                <i data-lucide="id-card" class="chip-icon" width="16" height="16"></i>National ID
+              </div>
+              <div class="field-chip" draggable="true" data-type="company" data-label="Company" ondragstart="onChipDrag(event)">
+                <i data-lucide="building-2" class="chip-icon" width="16" height="16"></i>Company
+              </div>
+              <div class="field-chip" draggable="true" data-type="companyid" data-label="Company ID" ondragstart="onChipDrag(event)">
+                <i data-lucide="file-text" class="chip-icon" width="16" height="16"></i>Company ID
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px">
+            <div class="sub-label">Inputs</div>
+            <div class="fields-grid">
+              <div class="field-chip" draggable="true" data-type="text" data-label="Text" ondragstart="onChipDrag(event)">
+                <i data-lucide="type" class="chip-icon" width="16" height="16"></i>Text
+              </div>
+              <div class="field-chip" draggable="true" data-type="number" data-label="Number" ondragstart="onChipDrag(event)">
+                <i data-lucide="hash" class="chip-icon" width="16" height="16"></i>Number
+              </div>
+              <div class="field-chip" draggable="true" data-type="date" data-label="Date" ondragstart="onChipDrag(event)">
+                <i data-lucide="calendar" class="chip-icon" width="16" height="16"></i>Date
+              </div>
+              <div class="field-chip" draggable="true" data-type="combobox" data-label="Combo box" ondragstart="onChipDrag(event)">
+                <i data-lucide="list" class="chip-icon" width="16" height="16"></i>Combo box
+              </div>
+              <div class="field-chip" draggable="true" data-type="radio" data-label="Single select" ondragstart="onChipDrag(event)">
+                <i data-lucide="circle-dot" class="chip-icon" width="16" height="16"></i>Single select
+              </div>
+              <div class="field-chip" draggable="true" data-type="checkbox" data-label="Checkbox" ondragstart="onChipDrag(event)">
+                <i data-lucide="square-check" class="chip-icon" width="16" height="16"></i>Checkbox
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="sub-label">Other</div>
+            <div class="fields-grid">
+              <div class="field-chip" draggable="true" data-type="stamp" data-label="Stamp" ondragstart="onChipDrag(event)">
+                <i data-lucide="stamp" class="chip-icon" width="16" height="16"></i>Stamp
+              </div>
+              <div class="field-chip" draggable="true" data-type="attachment" data-label="Attachment" ondragstart="onChipDrag(event)">
+                <i data-lucide="paperclip" class="chip-icon" width="16" height="16"></i>Attachment
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FIELD SETTINGS VIEW -->
+    <div id="pv-settings" style="display:none;flex-direction:column;height:100%">
+      <div class="panel-hdr">
+        <button class="icon-btn" onclick="closeSettings()">
+          <i data-lucide="arrow-left" width="20" height="20"></i>
+        </button>
+        <span class="panel-hdr-title">Field Settings</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="s-section">
+          <div class="form-group">
+            <div class="form-lbl">Recipient</div>
+            <div class="sel-icon-wrap">
+              <i data-lucide="pencil" class="si" width="16" height="16" id="s-recipient-icon"></i>
+              <div class="sel-wrap"><select class="form-select" id="s-recipient" style="padding-left:34px" onchange="onChangeRecipient()"><option value="sender">Sender (You)</option><option value="ann">Ann Smith (Signer)</option><option value="john">John Williams (Signer)</option></select></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-lbl">Field name</div>
+            <input type="text" class="form-input" id="s-fname" value="Full name" oninput="syncField()">
+          </div>
+          <div class="form-group">
+            <div class="form-lbl">Field code</div>
+            <input type="text" class="form-input" id="s-fcode" value="TEXT_1">
+            <div class="form-hint">Fields with same field code will have same content</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="dup-btn" style="flex:1" onclick="dupField(S.selectedField)">
+              <i data-lucide="copy" width="16" height="16"></i>
+              Duplicate
+            </button>
+            <button class="dup-btn" style="flex:1" onclick="dupLinkField(S.selectedField)">
+              <i data-lucide="link" width="16" height="16"></i>
+              Link
+            </button>
+          </div>
+          <div class="cb-row" onclick="toggleCb('cb-req')">
+            <div class="cb-box on" id="cb-req"><svg width="10" height="10" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div>
+            <span>Required</span>
+          </div>
+        </div>
+
+        <!-- Formatting accordion -->
+        <div>
+          <div class="acc-hdr" onclick="togAcc('fmt')">
+            <span class="acc-title">Formatting &amp; Size</span>
+            <div class="acc-icon-btn"><i data-lucide="chevron-up" id="chev-fmt" class="acc-chev open" width="20" height="20"></i></div>
+          </div>
+          <div class="acc-body open" id="acc-fmt">
+            <div class="acc-inner">
+              <div class="form-group">
+                <div class="form-lbl">Font</div>
+                <div class="sel-wrap"><select class="form-select"><option>Google Sans</option><option>Helvetica Neue</option><option>Times New Roman</option></select></div>
+              </div>
+              <div class="form-group">
+                <div class="form-lbl">Font size &amp; color</div>
+                <div class="f-row">
+                  <div class="sel-wrap"><select id="s-fontsize" class="form-select" onchange="syncField()"><option>10</option><option>12</option><option selected>14</option><option>16</option><option>18</option></select></div>
+                  <div class="sel-wrap" style="position:relative">
+                    <div id="s-colorDot" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:#03022e;border-radius:50%;pointer-events:none;z-index:1"></div>
+                    <select id="s-fontcolor" class="form-select" style="padding-left:34px" onchange="syncField()"><option>Black</option><option>Dark gray</option><option>Gray</option></select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="form-lbl">Size</div>
+                <div class="f-row">
+                  <div class="f-prefix-wrap"><span class="f-prefix">W</span><input type="text" class="form-input" id="s-w" value="160" oninput="syncField()"></div>
+                  <div class="f-prefix-wrap"><span class="f-prefix">H</span><input type="text" class="form-input" id="s-h" value="28" oninput="syncField()"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation accordion -->
+        <div>
+          <div class="acc-hdr" onclick="togAcc('val')">
+            <span class="acc-title">Validation</span>
+            <div class="acc-icon-btn"><i data-lucide="chevron-up" id="chev-val" class="acc-chev open" width="20" height="20"></i></div>
+          </div>
+          <div class="acc-body open" id="acc-val">
+            <div class="acc-inner">
+              <div class="form-group">
+                <div class="form-lbl">Validation type</div>
+                <div class="sel-wrap"><select class="form-select"><option value="">None</option><option>Email</option><option>Phone</option><option>Number</option></select></div>
+              </div>
+              <div class="form-group">
+                <div class="form-lbl">Value limit</div>
+                <div class="f-row">
+                  <input type="text" class="form-input" placeholder="Min">
+                  <input type="text" class="form-input" placeholder="Max">
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="form-lbl">Autofill from</div>
+                <div class="sel-wrap"><select class="form-select"><option value="">None</option><option>Contact data</option><option>Previous document</option></select></div>
+                <div class="form-hint">By selecting autofill type field content will be automatically populated</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location accordion -->
+        <div>
+          <div class="acc-hdr" onclick="togAcc('loc')">
+            <span class="acc-title">Location</span>
+            <div class="acc-icon-btn"><i data-lucide="chevron-up" id="chev-loc" class="acc-chev" width="20" height="20"></i></div>
+          </div>
+          <div class="acc-body" id="acc-loc">
+            <div class="acc-inner">
+              <div class="form-group">
+                <div class="form-lbl">Position</div>
+                <div class="f-row">
+                  <div class="f-prefix-wrap"><span class="f-prefix">X</span><input type="text" class="form-input" id="s-x" value="130"></div>
+                  <div class="f-prefix-wrap"><span class="f-prefix">Y</span><input type="text" class="form-input" id="s-y" value="105"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="form-lbl">Page number</div>
+                <div class="sel-wrap"><select class="form-select"><option>1</option><option>2</option></select></div>
+              </div>
+              <div class="cb-row" onclick="toggleCb('cb-auto')">
+                <div class="cb-box" id="cb-auto"></div>
+                <span>Auto-placement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button id="fullview-exit" onclick="toggleFullView()">
+  <i data-lucide="minimize" width="16" height="16"></i>
+  Exit full view
+</button>
+<div id="toast"></div>
+
+<script>
+const S = {
+  activeRecipient: 'ann',
+  selectedField: null,
+  previewMode: false,
+  previewAs: 'ann',
+  zoom: 100,
+  dragChip: null,
+  fieldCounter: 0,
+  fields: {},
+  pagesOpen: false,
+  activePage: 1,
+  psbCollapsed: false,
+};
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function goBack() { showToast('← Navigating back'); }
+function handleClose() { showToast('Document closed'); }
+
+function handleSend() {
+  const btn = document.getElementById('send-btn');
+  btn.textContent = '✓ Sent!'; btn.style.background = '#0ea50e';
+  setTimeout(() => { btn.textContent = 'Send'; btn.style.background = ''; }, 2500);
+  showToast('Document sent for signing to 2 recipients!');
+}
+
+// Preview
+function togglePreview() {
+  S.previewMode = !S.previewMode;
+  document.getElementById('preview-banner').style.display = S.previewMode ? 'flex' : 'none';
+  document.getElementById('preview-btn').classList.toggle('active', S.previewMode);
+  if (S.previewMode) deselectAll();
+  refreshColors();
+}
+function setPreviewAs(who) {
+  S.previewAs = who;
+  document.getElementById('pv-sender').classList.toggle('active', who==='sender');
+  document.getElementById('pv-ann').classList.toggle('active', who==='ann');
+  document.getElementById('pv-john').classList.toggle('active', who==='john');
+  refreshColors();
+}
+function refreshColors() {
+  Object.entries(S.fields).forEach(([id, f]) => {
+    const el = document.getElementById('fld-' + id);
+    if (!el) return;
+    const isSigType = ['signature','initials','stamp'].includes(f.type);
+    el.classList.remove('f-orange','f-teal','f-purple','f-blue','f-disabled','f-signed');
+    if (S.previewMode && isSigType && f.signatureFilled && f.recipient === S.previewAs) {
+      el.classList.add('f-signed');
+      if (!el.querySelector('.sig-filled-wrap')) renderSigFilledEl(id, el, f);
+    } else {
+      if (isSigType && el.querySelector('.sig-filled-wrap')) restoreSigBody(el, id, f);
+      if (S.previewMode) {
+        el.classList.add(f.recipient === S.previewAs ? 'f-purple' : 'f-disabled');
+      } else {
+        el.classList.add(f.recipient === 'ann' ? 'f-orange' : f.recipient === 'john' ? 'f-teal' : 'f-blue');
+      }
+    }
+  });
+}
+
+// Recipients
+function selRecipient(who) {
+  S.activeRecipient = who;
+  ['sender','ann','john'].forEach(r => document.getElementById('ri-'+r)?.classList.remove('r-ann','r-john-active','r-sender-active'));
+  const jd = document.getElementById('john-dot');
+  jd.classList.remove('teal-filled'); jd.classList.add('teal');
+  if (who === 'ann') {
+    document.getElementById('ri-ann').classList.add('r-ann');
+    document.getElementById('fields-title').textContent = 'Fields (Ann Smith)';
+    setChipScheme('orange');
+  } else if (who === 'john') {
+    document.getElementById('ri-john').classList.add('r-john-active');
+    jd.classList.remove('teal'); jd.classList.add('teal-filled');
+    document.getElementById('fields-title').textContent = 'Fields (John Williams)';
+    setChipScheme('teal');
+  } else {
+    document.getElementById('ri-sender').classList.add('r-sender-active');
+    document.getElementById('fields-title').textContent = 'Fields (Sender)';
+    setChipScheme('blue');
+  }
+}
+function setChipScheme(c) {
+  document.querySelectorAll('.field-chip').forEach(el => {
+    el.classList.toggle('teal-scheme', c==='teal');
+    el.classList.toggle('blue-scheme', c==='blue');
+  });
+  document.querySelectorAll('.chip-icon').forEach(el => {
+    el.classList.toggle('teal', c==='teal');
+    el.classList.toggle('blue', c==='blue');
+  });
+}
+
+// Field selection
+function selField(e, id) {
+  e.stopPropagation();
+  if (S.previewMode) {
+    const f = S.fields[id];
+    if (f?.recipient !== S.previewAs) { showToast('This field belongs to another signer'); return; }
+    if (['signature','initials','stamp'].includes(f.type)) {
+      f.signatureFilled = !f.signatureFilled;
+      renderSigFilled(id, f);
+      return;
+    }
+    showToast('Tap to fill: ' + f?.label);
+    return;
+  }
+  if (S.selectedField && S.selectedField !== id) deselUI(S.selectedField);
+  S.selectedField = id;
+  document.getElementById('fld-' + id)?.classList.add('sel');
+  const tb = document.getElementById('tb-' + id);
+  if (tb) tb.style.display = 'flex';
+  openSettings(id);
+}
+function deselUI(id) {
+  document.getElementById('fld-' + id)?.classList.remove('sel');
+  const tb = document.getElementById('tb-' + id);
+  if (tb) tb.style.display = 'none';
+}
+function deselectAll() {
+  if (S.selectedField) { deselUI(S.selectedField); S.selectedField = null; }
+  closePanelSettings();
+}
+function onPageClick(e) {
+  if (e.target.closest('.placed-field') || e.target.closest('.f-toolbar')) return;
+  deselectAll();
+}
+
+// Settings
+const COLOR_MAP = {'Black':'#03022e','Dark gray':'#686782','Gray':'#9a9aab'};
+const COLOR_RMAP = {'#03022e':'Black','#686782':'Dark gray','#9a9aab':'Gray'};
+
+function _updateRecipientIcon(recipient) {
+  const icon = document.getElementById('s-recipient-icon');
+  if (!icon) return;
+  const colorMap = { sender: 'var(--blue)', ann: 'var(--orange)', john: 'var(--teal)' };
+  icon.style.color = colorMap[recipient] || 'var(--orange)';
+}
+
+function onChangeRecipient() {
+  const id = S.selectedField; if (!id) return;
+  const f = S.fields[id]; if (!f) return;
+  const newRecipient = document.getElementById('s-recipient').value;
+  f.recipient = newRecipient;
+  _updateRecipientIcon(newRecipient);
+  refreshColors();
+  showToast('Recipient updated');
+}
+
+function openSettings(id) {
+  const f = S.fields[id]; if (!f) return;
+  document.getElementById('s-fname').value = f.label;
+  document.getElementById('s-fcode').value = f.type.toUpperCase() + '_' + (Object.keys(S.fields).indexOf(id)+1);
+  document.getElementById('s-w').value = f.w;
+  document.getElementById('s-h').value = f.h;
+  document.getElementById('s-x').value = f.x;
+  document.getElementById('s-y').value = f.y;
+  // Font size
+  const fsEl = document.getElementById('s-fontsize');
+  fsEl.value = f.fontSize || '14';
+  // Font color
+  const fcEl = document.getElementById('s-fontcolor');
+  fcEl.value = COLOR_RMAP[f.fontColor] || 'Black';
+  updateColorDot(f.fontColor || '#03022e');
+  const sel = document.getElementById('s-recipient');
+  sel.value = f.recipient;
+  _updateRecipientIcon(f.recipient);
+  document.getElementById('pv-recipients').style.display = 'none';
+  document.getElementById('pv-settings').style.display = 'flex';
+}
+
+function updateColorDot(hex) {
+  const d = document.getElementById('s-colorDot');
+  if (d) d.style.background = hex;
+}
+
+function syncField() {
+  const id = S.selectedField; if (!id) return;
+  const f = S.fields[id]; if (!f) return;
+  const el = document.getElementById('fld-' + id); if (!el) return;
+  const tb = document.getElementById('tb-' + id);
+
+  // Label
+  const nameVal = document.getElementById('s-fname').value;
+  f.label = nameVal;
+  const labelEl = el.querySelector('.f-body span:first-child') || el.querySelector('.f-sig-body span');
+  if (labelEl) labelEl.textContent = nameVal;
+
+  // Font size
+  const fs = parseInt(document.getElementById('s-fontsize').value) || 14;
+  f.fontSize = fs;
+  const bodyEl = el.querySelector('.f-body') || el.querySelector('.f-sig-body');
+  if (bodyEl) bodyEl.style.fontSize = fs + 'px';
+
+  // Font color
+  const colorKey = document.getElementById('s-fontcolor').value;
+  const hex = COLOR_MAP[colorKey] || '#03022e';
+  f.fontColor = hex;
+  if (bodyEl) bodyEl.style.color = hex;
+  updateColorDot(hex);
+
+  // W / H
+  const newW = parseInt(document.getElementById('s-w').value);
+  const newH = parseInt(document.getElementById('s-h').value);
+  if (newW >= 40 && newW <= 600) { f.w = newW; el.style.width = newW + 'px'; }
+  if (newH >= 16 && newH <= 400) { f.h = newH; el.style.height = newH + 'px'; }
+  if (tb) tb.style.top = Math.max(0, f.y - 32) + 'px';
+}
+function closeSettings() { deselectAll(); }
+function closePanelSettings() {
+  document.getElementById('pv-recipients').style.display = 'flex';
+  document.getElementById('pv-settings').style.display = 'none';
+}
+
+function delField(id) {
+  document.getElementById('fld-'+id)?.remove();
+  document.getElementById('tb-'+id)?.remove();
+  delete S.fields[id];
+  S.selectedField = null;
+  closePanelSettings();
+  showToast('Field removed');
+}
+
+// ---- SIGNATURE FILL (preview mode) ----
+const SIGNIFY_LOGO_SVG = `<svg width="36" height="12" viewBox="0 0 96 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.3655 1.13111H21.5713V5.03297H26.3655V1.13111Z" fill="#03022E"/><path d="M69.3326 1.13111H64.5392V5.03297H69.3326V1.13111Z" fill="#17C717"/><path d="M26.3655 7.70046H21.5713V24.9437H26.3655V7.70046Z" fill="#03022E"/><path d="M40.1711 10.002H40.2389V7.70046H44.7961V24.3951C44.7961 28.864 42.163 32 35.7824 32C31.7315 32 28.2545 29.9651 28.0517 26.4631H32.8093C33.2149 28.1313 34.5314 28.8309 36.3876 28.8309C38.8522 28.8309 40.2366 27.2968 40.2366 24.6624V22.2947H40.1687C39.62 23.1631 38.8443 23.8692 37.9234 24.3387C37.0026 24.8081 35.9706 25.0235 34.9362 24.9622C29.9064 24.9622 27.4754 20.8084 27.4754 15.7723C27.4754 11.3696 30.0749 7.23354 34.9697 7.23354C37.471 7.23354 39.0909 8.16816 40.1711 10.002ZM36.1529 21.3939C38.7524 21.3939 40.2381 18.7742 40.2381 16.072C40.2381 13.6711 39.4949 10.8025 36.1193 10.8025C33.6548 10.8025 32.2712 12.8706 32.2712 15.706C32.2719 18.5068 33.3857 21.3939 36.1529 21.3939Z" fill="#03022E"/><path d="M62.8888 14.2051V24.9437H58.0938V15.1721C58.0938 12.3366 57.2507 10.9697 55.0225 10.9697C52.0509 10.9697 51.3084 12.9037 51.3084 15.9726V24.9437H46.5142V7.70047H51.0721V10.1021H51.1735C51.7378 9.20353 52.5298 8.46614 53.4713 7.96298C54.4127 7.45983 55.4709 7.20838 56.541 7.23354C60.964 7.23354 62.8888 9.36862 62.8888 14.2051Z" fill="#03022E"/><path d="M69.3326 7.70046H64.5392V24.9437H69.3326V7.70046Z" fill="#03022E"/><path d="M72.0297 10.8696H70.4768V7.70046H72.0297V6.42989C72.0297 2.82776 74.4264 1.12725 77.8698 1.12725C78.2075 1.12725 78.9843 1.16038 80.4014 1.25978V4.79564C79.8299 4.73175 79.2553 4.69832 78.6801 4.69548C77.2957 4.69548 76.8231 5.22944 76.8231 6.6988V7.70046H80.1323V10.8696H76.8262V24.9437H72.0297V10.8696Z" fill="#03022E"/><path d="M87.1548 19.5077H87.2227L91.0373 7.70046H96L88.7076 27.1119C87.6937 29.8133 86.0068 31.0137 82.7661 31.0137C81.7624 31.0122 80.7595 30.9563 79.7619 30.8465V26.9447C80.601 27.0566 81.4468 27.1124 82.2935 27.1119C82.5822 27.1252 82.8705 27.0777 83.1393 26.9725C83.408 26.8674 83.651 26.7069 83.8521 26.5019C84.0533 26.2968 84.208 26.0518 84.306 25.7832C84.4039 25.5145 84.4429 25.2284 84.4204 24.9437C84.4211 24.5786 84.3523 24.2165 84.2176 23.8765L78.0741 7.70046H83.2053L87.1548 19.5077Z" fill="#03022E"/><path d="M10.8106 9.9542C7.22293 9.18369 5.52346 8.61891 5.52346 6.67492C5.52346 5.006 7.25491 3.86333 9.89809 3.86333C12.3159 3.86333 14.1206 4.98134 14.5348 7.20041H19.2557C18.7745 2.55347 15.2866 0 9.96594 0C4.64526 0 0.67542 2.44483 0.67542 7.16573C0.67542 12.174 4.64526 13.2897 8.98635 14.266C12.677 15.102 14.9825 15.5689 14.9825 17.9105C14.9825 20.1218 12.7784 20.9925 10.2701 20.9925C6.81581 20.9925 5.15144 19.8576 4.81061 16.9789H0C0.169245 22.035 3.89965 24.9152 10.4721 24.9152C15.9316 24.9152 19.8976 22.2038 19.8976 17.348C19.864 12.1987 15.7928 11.0221 10.8106 9.9542Z" fill="#03022E"/></svg>`;
+
+function _sigFilledHTML(id, f) {
+  const name = f.recipient === 'ann' ? 'Ann Smith' : f.recipient === 'john' ? 'John Williams' : 'Sender';
+  const uid  = f.recipient === 'ann' ? 'ann.smith' : f.recipient === 'john' ? 'john.williams' : 'sender';
+  const hash = `${uid}: 1287abvsgd-766354-lhkjsnmbhsd56hgsfdkasf534`;
+  return `<div class="sig-filled-wrap">
+    <div class="sig-handwriting">${name}</div>
+    <div class="sig-badge-top">eSigned by:<small>${hash}</small></div>
+    <div class="sig-badge-bot"><span>Certified by</span>${SIGNIFY_LOGO_SVG}</div>
+  </div>`;
+}
+
+function _sigEmptyHTML(f) {
+  const handles = '<div class="sel-handle sh-tl"></div><div class="sel-handle sh-tr"></div><div class="sel-handle sh-bl"></div><div class="sel-handle sh-br"></div>';
+  return handles + `<div class="f-sig-body"><i data-lucide="signature" width="22" height="15"></i><span>${f.label}</span></div>`;
+}
+
+function renderSigFilledEl(id, el, f) {
+  el.innerHTML = _sigFilledHTML(id, f);
+  if (f.linkedGroup) el.insertAdjacentHTML('beforeend', `<div class="link-badge"><svg width="8" height="8" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>`);
+}
+
+function renderSigFilled(id, f) {
+  const el = document.getElementById('fld-' + id); if (!el) return;
+  el.classList.remove('f-orange','f-teal','f-purple','f-disabled','f-signed');
+  if (f.signatureFilled) {
+    el.classList.add('f-signed');
+    renderSigFilledEl(id, el, f);
+  } else {
+    el.classList.add(f.recipient === S.previewAs ? 'f-purple' : 'f-disabled');
+    el.innerHTML = _sigEmptyHTML(f);
+    if (f.linkedGroup) el.insertAdjacentHTML('beforeend', `<div class="link-badge"><svg width="8" height="8" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>`);
+  }
+}
+
+function restoreSigBody(el, id, f) {
+  el.innerHTML = _sigEmptyHTML(f);
+  if (f.linkedGroup) el.insertAdjacentHTML('beforeend', `<div class="link-badge"><svg width="8" height="8" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>`);
+  f.signatureFilled = false;
+  lucide.createIcons();
+}
+
+// ---- TEXT FILL ----
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderFieldValue(id, el, value) {
+  const f = S.fields[id]; if (!f) return;
+  const body = el.querySelector('.f-body'); if (!body) return;
+  if (value) {
+    body.innerHTML = `<span id="fv-${id}" style="flex:1;overflow:hidden;text-overflow:ellipsis">${escHtml(value)}</span>`;
+  } else {
+    body.innerHTML = `<span id="fv-${id}" style="flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--text-placeholder)">${f.label}</span><span class="f-star">*</span>`;
+  }
+  if (f.fontSize) body.style.fontSize = f.fontSize + 'px';
+  if (f.fontColor) body.style.color = value ? f.fontColor : '';
+}
+
+function propagateValue(sourceId, value) {
+  const f = S.fields[sourceId]; if (!f || !f.linkedGroup) return;
+  Object.entries(S.fields).forEach(([id, of]) => {
+    if (id !== sourceId && of.linkedGroup === f.linkedGroup) {
+      of.value = value;
+      const el2 = document.getElementById('fld-' + id);
+      if (el2) renderFieldValue(id, el2, value);
+    }
+  });
+}
+
+const EDITABLE_TYPES = ['text','fullname','email','mobile','nationalid','company','companyid','number','date','combobox'];
+function startEdit(e, id) {
+  e.stopPropagation();
+  const f = S.fields[id];
+  if (!f || !EDITABLE_TYPES.includes(f.type)) return;
+  const el = document.getElementById('fld-' + id); if (!el) return;
+  if (el.querySelector('.f-edit-input')) return;
+  const body = el.querySelector('.f-body'); if (!body) return;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'f-edit-input';
+  input.value = f.value || '';
+  input.placeholder = f.label;
+  body.innerHTML = '';
+  body.appendChild(input);
+  input.focus(); input.select();
+
+  const commit = () => {
+    f.value = input.value;
+    renderFieldValue(id, el, f.value);
+    if (f.linkedGroup) propagateValue(id, f.value);
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+    if (ev.key === 'Escape') { input.value = f.value || ''; input.blur(); }
+  });
+}
+
+// ---- DUPLICATE & LINK ----
+const _ICON_DUP = `<i data-lucide="copy" width="14" height="14"></i>`;
+const _ICON_LNK = `<i data-lucide="link" width="14" height="14"></i>`;
+const _ICON_DEL = `<i data-lucide="trash-2" width="14" height="14"></i>`;
+
+function addLinkBadge(id) {
+  const el = document.getElementById('fld-' + id); if (!el) return;
+  if (el.querySelector('.link-badge')) return;
+  el.insertAdjacentHTML('beforeend', `<div class="link-badge"><svg width="8" height="8" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>`);
+}
+
+function spawnField(id, f) {
+  const isSig = ['signature','initials','stamp'].includes(f.type);
+  const colorCls = f.recipient === 'ann' ? 'f-orange' : f.recipient === 'john' ? 'f-teal' : 'f-blue';
+  const pg = document.getElementById('page-' + f.page); if (!pg) return;
+  document.getElementById('fld-' + id)?.remove();
+  document.getElementById('tb-' + id)?.remove();
+
+  const el = document.createElement('div');
+  el.id = 'fld-' + id;
+  el.className = 'placed-field ' + colorCls;
+  el.style.cssText = `left:${f.x}px;top:${f.y}px;width:${f.w}px;height:${f.h}px`;
+  el.onclick = ev => selField(ev, id);
+  if (!isSig) el.ondblclick = ev => startEdit(ev, id);
+
+  const handles = '<div class="sel-handle sh-tl"></div><div class="sel-handle sh-tr"></div><div class="sel-handle sh-bl"></div><div class="sel-handle sh-br"></div>';
+  if (isSig) {
+    el.innerHTML = handles + `<div class="f-sig-body"><i data-lucide="signature" width="22" height="15"></i><span>${f.label}</span></div>`;
+  } else {
+    const spanHtml = f.value
+      ? `<span id="fv-${id}" style="flex:1;overflow:hidden;text-overflow:ellipsis">${escHtml(f.value)}</span>`
+      : `<span id="fv-${id}" style="flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--text-placeholder)">${f.label}</span><span class="f-star">*</span>`;
+    el.innerHTML = handles + `<div class="f-body">${spanHtml}</div>`;
+  }
+  if (f.linkedGroup) {
+    el.insertAdjacentHTML('beforeend', `<div class="link-badge"><svg width="8" height="8" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>`);
+  }
+
+  const tb = document.createElement('div');
+  tb.id = 'tb-' + id; tb.className = 'f-toolbar';
+  tb.style.cssText = `left:${f.x}px;top:${Math.max(0,f.y-32)}px`;
+  tb.innerHTML = `<button class="ft-btn" title="Duplicate" onclick="dupField('${id}')">${_ICON_DUP}</button><button class="ft-btn" title="Duplicate and link" onclick="dupLinkField('${id}')">${_ICON_LNK}</button><div class="ft-sep"></div><button class="ft-btn" style="color:#f5222d" onclick="delField('${id}')">${_ICON_DEL}</button>`;
+  pg.appendChild(el); pg.appendChild(tb);
+  lucide.createIcons();
+}
+
+function dupField(id) {
+  const f = S.fields[id]; if (!f) return;
+  const nid = 'df_' + (++S.fieldCounter);
+  S.fields[nid] = { ...f, x: f.x + 20, y: f.y + 20, linkedGroup: null, value: '' };
+  spawnField(nid, S.fields[nid]);
+  refreshColors();
+  showToast('Field duplicated');
+}
+
+function dupLinkField(id) {
+  const f = S.fields[id]; if (!f) return;
+  if (!f.linkedGroup) {
+    f.linkedGroup = 'grp_' + (++S.fieldCounter);
+    addLinkBadge(id);
+  }
+  const nid = 'df_' + (++S.fieldCounter);
+  S.fields[nid] = { ...f, x: f.x + 20, y: f.y + 20, value: f.value || '' };
+  spawnField(nid, S.fields[nid]);
+  refreshColors();
+  showToast('Linked — edits in either field sync to both');
+}
+
+// Drag & drop
+function onChipDrag(e) {
+  S.dragChip = { type: e.currentTarget.dataset.type, label: e.currentTarget.dataset.label };
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', JSON.stringify(S.dragChip));
+}
+function onDragOver(e, pg) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+  document.getElementById('page-'+pg)?.classList.add('drag-over');
+}
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function onDrop(e, pg) {
+  e.preventDefault();
+  const page = document.getElementById('page-'+pg);
+  page?.classList.remove('drag-over');
+  const chip = S.dragChip || JSON.parse(e.dataTransfer.getData('text/plain')||'{}');
+  if (!chip.type) return;
+  const rect = page.getBoundingClientRect();
+  const x = Math.round(Math.max(4, e.clientX - rect.left - 80));
+  const y = Math.round(Math.max(4, e.clientY - rect.top - 14));
+  const isSig = ['signature','initials','stamp'].includes(chip.type);
+  const w = 160, h = isSig ? 88 : 28;
+  const rid = 'df_' + (++S.fieldCounter);
+  const recipient = S.activeRecipient;
+  S.fields[rid] = { label:chip.label, recipient, type:chip.type, page:pg, x, y, w, h, value:'', linkedGroup:null, signatureFilled:false };
+  spawnField(rid, S.fields[rid]);
+  S.dragChip = null;
+  showToast(chip.label + ' placed — double-click to fill');
+}
+
+// Zoom
+function chgZoom(d) {
+  S.zoom = Math.max(50, Math.min(200, S.zoom + d));
+  document.getElementById('zoom-lbl').textContent = S.zoom + '%';
+  document.getElementById('pages-wrap').style.zoom = S.zoom / 100;
+}
+function resetZoom() {
+  S.zoom = 100;
+  document.getElementById('zoom-lbl').textContent = '100%';
+  document.getElementById('pages-wrap').style.zoom = 1;
+}
+
+// Accordion
+function togAcc(id) {
+  const b = document.getElementById('acc-'+id), c = document.getElementById('chev-'+id);
+  const o = b.classList.contains('open');
+  b.classList.toggle('open', !o); c.classList.toggle('open', !o);
+}
+
+// Checkbox
+function toggleCb(id) {
+  const b = document.getElementById(id), on = b.classList.contains('on');
+  b.classList.toggle('on', !on);
+  b.innerHTML = !on ? '<i data-lucide="check" width="10" height="10" style="stroke:white;stroke-width:2.5"></i>' : '';
+  if (!on) lucide.createIcons();
+}
+
+// Tabs
+function switchTab(t) {
+  document.getElementById('tab-r').classList.toggle('active', t==='recipients');
+  document.getElementById('tab-a').classList.toggle('active', t==='attributes');
+  if (t==='attributes') showToast('Attributes panel — coming soon');
+}
+
+// ---- RESIZE + DRAG LOGIC ----
+let R = null;        // resize state
+let D = null;        // field-move drag state
+let dragMoved = false;
+
+// Capture-phase click interceptor: stop clicks that follow a drag or a handle interaction
+document.addEventListener('click', e => {
+  if (e.target.closest('.sel-handle')) { e.stopPropagation(); return; }
+  if (dragMoved) { e.stopPropagation(); dragMoved = false; }
+}, true);
+
+document.addEventListener('mousedown', e => {
+  // ---- RESIZE: mousedown on a corner handle ----
+  const h = e.target.closest('.sel-handle');
+  if (h) {
+    const fld = h.closest('.placed-field'); if (!fld) return;
+    const id = fld.id.replace('fld-', '');
+    const f = S.fields[id]; if (!f) return;
+    e.stopPropagation(); e.preventDefault();
+    R = {
+      id,
+      corner: h.classList.contains('sh-tl') ? 'tl'
+             : h.classList.contains('sh-tr') ? 'tr'
+             : h.classList.contains('sh-bl') ? 'bl' : 'br',
+      startX: e.clientX, startY: e.clientY,
+      startW: f.w, startH: f.h, startLeft: f.x, startTop: f.y
+    };
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = window.getComputedStyle(h).cursor;
+    return;
+  }
+
+  // ---- DRAG MOVE: mousedown on a placed field body ----
+  const fld = e.target.closest('.placed-field');
+  if (!fld || S.previewMode) return;
+  const id = fld.id.replace('fld-', '');
+  const f = S.fields[id]; if (!f) return;
+  const pg = document.getElementById('page-' + f.page); if (!pg) return;
+
+  const pgRect = pg.getBoundingClientRect();
+  const z = S.zoom / 100;
+  D = {
+    id, page: f.page,
+    offsetX: (e.clientX - pgRect.left) / z - f.x,
+    offsetY: (e.clientY - pgRect.top)  / z - f.y,
+    startX: e.clientX, startY: e.clientY,
+    moving: false
+  };
+  dragMoved = false;
+});
+
+document.addEventListener('mousemove', e => {
+  // ---- RESIZE mousemove ----
+  if (R) {
+    const z = S.zoom / 100;
+    const dx = (e.clientX - R.startX) / z;
+    const dy = (e.clientY - R.startY) / z;
+    const MIN_W = 60, MIN_H = 20;
+    let w = R.startW, h = R.startH, x = R.startLeft, y = R.startTop;
+
+    if (R.corner === 'br') {
+      w = Math.max(MIN_W, w + dx); h = Math.max(MIN_H, h + dy);
+    } else if (R.corner === 'bl') {
+      const nw = Math.max(MIN_W, w - dx); x = x + w - nw; w = nw;
+      h = Math.max(MIN_H, h + dy);
+    } else if (R.corner === 'tr') {
+      w = Math.max(MIN_W, w + dx);
+      const nh = Math.max(MIN_H, h - dy); y = y + h - nh; h = nh;
+    } else {
+      const nw = Math.max(MIN_W, w - dx); x = x + w - nw; w = nw;
+      const nh = Math.max(MIN_H, h - dy); y = y + h - nh; h = nh;
+    }
+
+    const f = S.fields[R.id];
+    f.w = Math.round(w); f.h = Math.round(h);
+    f.x = Math.round(x); f.y = Math.round(y);
+    const el = document.getElementById('fld-' + R.id);
+    if (el) { el.style.width = f.w+'px'; el.style.height = f.h+'px'; el.style.left = f.x+'px'; el.style.top = f.y+'px'; }
+    const tb = document.getElementById('tb-' + R.id);
+    if (tb) { tb.style.left = f.x+'px'; tb.style.top = Math.max(0, f.y-32)+'px'; }
+    if (S.selectedField === R.id) {
+      document.getElementById('s-w').value = f.w;
+      document.getElementById('s-h').value = f.h;
+      document.getElementById('s-x').value = f.x;
+      document.getElementById('s-y').value = f.y;
+    }
+    return;
+  }
+
+  // ---- DRAG MOVE mousemove ----
+  if (!D) return;
+  const adx = Math.abs(e.clientX - D.startX), ady = Math.abs(e.clientY - D.startY);
+  if (!D.moving && adx < 5 && ady < 5) return; // threshold before committing to drag
+
+  if (!D.moving) {
+    D.moving = true;
+    dragMoved = true;
+    // Select the field immediately when drag starts
+    if (S.selectedField !== D.id) {
+      if (S.selectedField) deselUI(S.selectedField);
+      S.selectedField = D.id;
+      document.getElementById('fld-' + D.id)?.classList.add('sel');
+      const tb0 = document.getElementById('tb-' + D.id);
+      if (tb0) tb0.style.display = 'flex';
+      openSettings(D.id);
+    }
+    document.getElementById('fld-' + D.id)?.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+  }
+
+  const f = S.fields[D.id];
+  const pg = document.getElementById('page-' + D.page);
+  const pgRect = pg.getBoundingClientRect();
+  const z = S.zoom / 100;
+
+  let newX = Math.round((e.clientX - pgRect.left) / z - D.offsetX);
+  let newY = Math.round((e.clientY - pgRect.top)  / z - D.offsetY);
+  // Clamp within page
+  newX = Math.max(0, Math.min(pg.offsetWidth  - f.w, newX));
+  newY = Math.max(0, Math.min(pg.offsetHeight - f.h, newY));
+
+  f.x = newX; f.y = newY;
+  const el = document.getElementById('fld-' + D.id);
+  if (el) { el.style.left = newX+'px'; el.style.top = newY+'px'; }
+  const tb = document.getElementById('tb-' + D.id);
+  if (tb) { tb.style.left = newX+'px'; tb.style.top = Math.max(0, newY-32)+'px'; }
+  if (S.selectedField === D.id) {
+    document.getElementById('s-x').value = newX;
+    document.getElementById('s-y').value = newY;
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (R) { R = null; document.body.style.userSelect = ''; document.body.style.cursor = ''; }
+  if (D) {
+    if (D.moving) {
+      document.getElementById('fld-' + D.id)?.classList.remove('dragging');
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    D = null;
+  }
+});
+
+// ---- PAGES SIDEBAR ----
+function togglePagesSidebar() {
+  S.pagesOpen = !S.pagesOpen;
+  const sb = document.getElementById('pages-sidebar');
+  const btn = document.getElementById('psb-toggle-btn');
+  sb.classList.toggle('closed', !S.pagesOpen);
+  btn.classList.toggle('active', S.pagesOpen);
+}
+
+function togglePsbCollapse() {
+  S.psbCollapsed = !S.psbCollapsed;
+  document.getElementById('psb-pages').classList.toggle('collapsed', S.psbCollapsed);
+  document.getElementById('psb-chev').classList.toggle('collapsed', S.psbCollapsed);
+}
+
+function scrollToPage(n) {
+  S.activePage = n;
+  const pg = document.getElementById('page-' + n);
+  if (pg) pg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.psb-page').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.page) === n);
+  });
+}
+
+// Sync active page thumbnail when scrolling
+(function() {
+  let scrollRaf;
+  document.addEventListener('DOMContentLoaded', () => {
+    const wrap = document.getElementById('pages-wrap');
+    if (!wrap) return;
+    wrap.addEventListener('scroll', () => {
+      cancelAnimationFrame(scrollRaf);
+      scrollRaf = requestAnimationFrame(() => {
+        const wrapTop = wrap.getBoundingClientRect().top;
+        let closest = 1, minDist = Infinity;
+        [1, 2].forEach(n => {
+          const pg = document.getElementById('page-' + n);
+          if (!pg) return;
+          const dist = Math.abs(pg.getBoundingClientRect().top - wrapTop);
+          if (dist < minDist) { minDist = dist; closest = n; }
+        });
+        if (closest !== S.activePage) {
+          S.activePage = closest;
+          document.querySelectorAll('.psb-page').forEach(el => {
+            el.classList.toggle('active', parseInt(el.dataset.page) === closest);
+          });
+        }
+      });
+    });
+  });
+})();
+
+// Keep sidebar title in sync with doc title
+function updatePsbTitle(val) {
+  const el = document.getElementById('psb-doc-title');
+  if (el) el.textContent = val;
+}
+
+// ---- TITLE RENAME ----
+function startTitleEdit() {
+  const el = document.getElementById('doc-title'); if (!el) return;
+  const current = el.textContent.trim();
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'doc-title-input';
+  input.value = current;
+  input.style.width = Math.max(200, Math.min(400, current.length * 9.5 + 32)) + 'px';
+  el.replaceWith(input);
+  input.focus(); input.select();
+  const commit = () => {
+    const val = input.value.trim() || current;
+    const div = document.createElement('div');
+    div.className = 'doc-title'; div.id = 'doc-title';
+    div.textContent = val; div.onclick = startTitleEdit;
+    input.replaceWith(div);
+    document.querySelectorAll('.page-lbl span:first-child').forEach(s => s.textContent = val);
+    updatePsbTitle(val);
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+    if (ev.key === 'Escape') { input.value = current; input.blur(); }
+  });
+  input.addEventListener('input', () => {
+    input.style.width = Math.max(200, Math.min(400, input.value.length * 9.5 + 32)) + 'px';
+  });
+}
+
+// ---- FULL DOCUMENT VIEW ----
+let _previewBannerWasVisible = false;
+function toggleFullView() {
+  const entering = !document.body.classList.contains('fullview');
+  if (entering) {
+    _previewBannerWasVisible = S.previewMode;
+    deselectAll();
+  }
+  document.body.classList.toggle('fullview', entering);
+  const btn = document.getElementById('fullview-btn');
+  if (btn) {
+    btn.querySelector('i')?.setAttribute('data-lucide', entering ? 'minimize' : 'maximize');
+    lucide.createIcons({ nodes: [btn] });
+  }
+  lucide.createIcons({ nodes: [document.getElementById('fullview-exit')] });
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.body.classList.contains('fullview')) toggleFullView();
+});
+
+refreshColors();
+lucide.createIcons();
+</script>
+</body>
+</html>
